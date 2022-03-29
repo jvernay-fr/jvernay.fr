@@ -1,0 +1,3 @@
+[submodule "www.jvernay.fr"]
+	path = www.jvernay.fr
+	url = https://github.com/jvernay-fr/www.jvernay.fr.git

@@ -121,7 +121,7 @@ class Nginx:
                 config += f"\t\tserver_name {' '.join(service.server_names)};\n"
                 config += "\t\tlisten 80;\n"
                 if with_certbot_config:
-                    config += f"\t\tlocation {Certbot.CHALLENGE_URI} {{\n"
+                    config += f"\t\tlocation /{Certbot.CHALLENGE_URI} {{\n"
                     config += f"\t\t\troot {NGINX_CERTBOT_CHALLENGES};\n"
                     config += "\t\t}\n"
                 

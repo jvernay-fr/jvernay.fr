@@ -14,15 +14,15 @@ class Certbot:
         if not self.exe:
             raise RuntimeError("Could not find 'certbot' on path...")
     
-    def certify(self, server_names: List[str], webroot: str):
+    def certify(self, server_names: List[str], webroot: str, email: str):
         """Create certificates for all the given server_names.
         This requires doing an ACME challenge. For this to work,
         the 'webroot' directory must be setup (by you!) such that
         all its files are accessible from the URL:
         http://{server_name}/{Certbot.CHALLENGE_URI}/{filename}"""
 
-        args = [ self.exe, "certonly", "--webroot",
-            "--webroot-path", ResolvePath("./nginx/html/.well-known") ]
+        args = [ self.exe, "certonly", "--webroot", "--agree-tos", "-n",
+            "--webroot-path", ResolvePath(webroot), "--email", email ]
         for server_name in server_names:
             args += [ "-d", server_name ]
         subprocess.run(args)

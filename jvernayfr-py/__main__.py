@@ -12,6 +12,10 @@ from .Utility import *
 parser = argparse.ArgumentParser(prog="python3 -m jvernayfr-py", description="Module to build, run and deploy the jvernay.fr website.")
 parser.add_argument("--certify", action="store_true", default=False, help="Use certbot to create HTTPS certificates.")
 parser.add_argument("--deploy", action="store_true", default=False, help="Deploy server on port 80 and 443")
+parser.add_argument("--build-single-thread", action="store_true", default=False,
+    dest="build_single_thread", help="If nginx must be built, do it single-threaded.")
+parser.add_argument("--rebuild-nginx", action="store_true", default=False,
+    dest="rebuild_nginx", help="Force nginx to be rebuilt.")
 args = parser.parse_args()
 
 services = [
@@ -27,11 +31,7 @@ if args.certify:
     server_names = [n for s in services for n in s.server_names]
     certbot = Certbot()
     certbot.certify(server_names)
-elif args.deploy:
-    nginx = Nginx()
-    nginx.config(services, with_server_names=True)
-    nginx.run()
 else:
-    nginx = Nginx()
-    nginx.config(services)
+    nginx = Nginx(args.rebuild_nginx, not args.build_single_thread)
+    nginx.config(services, with_server_names=args.deploy)
     nginx.run()

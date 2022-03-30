@@ -52,7 +52,7 @@ class Nginx:
         ]
       
     @staticmethod
-    def _build():
+    def _build(multithreaded=True):
         EnsureEmptyDir(NGINX_PREFIX)
 
         logging.info("Downloading sources...")
@@ -65,15 +65,19 @@ class Nginx:
         logging.info("Building nginx...")
         WORK_DIR = NGINX_SRC / "nginx"
         subprocess.run(["./configure"] + NGINX_CONFIGURE_OPTIONS, cwd=WORK_DIR)
-        subprocess.run(["make", "install", "-j"], cwd = WORK_DIR)
+        mt_opt = ["-j"] if multithreaded else []
+        subprocess.run(["make", "install"] + mt_opt, cwd = WORK_DIR)
 
         EnsureEmptyDir(NGINX_CERTBOT_CHALLENGES)
         Path(NGINX_CERTBOT_CHALLENGES / "THIS_FOLDER_IS_PUBLIC.txt").touch()
 
-    def __init__(self, force_rebuild = False):
+    def __init__(self, force_rebuild = False, multithreaded = True):
         if force_rebuild or not NGINX_PREFIX.exists():
+            if self.is_running():
+                logging.info("nginx is running, shutting down...")
+                subprocess.run([NGINX_EXE, "-s", "quit"])
             logging.info("Building nginx from sources:")
-            Nginx._build()
+            Nginx._build(multithreaded)
     
     def config(self, services: List[Service], *,
             with_server_names = False, with_https: None|Tuple[str,str] = None,
@@ -155,8 +159,13 @@ class Nginx:
         if result.returncode:
             raise RuntimeError("Nginx cannot parse the generated configuration...")
 
+    def is_running(self):
+        pid_file = NGINX_PREFIX / "logs/nginx.pid"
+        return pid_file.exists() and pid_file.stat().st_size > 0
+
     def run(self):
-        if Path(NGINX_PREFIX / "logs" / "nginx.pid").exists():
+        logging.info("Running nginx...")
+        if self.is_running():
             result = subprocess.run([NGINX_EXE, "-s", "reload"])
             if result.returncode:
                 # The nginx.pid exists if nginx was interrupted by OS.

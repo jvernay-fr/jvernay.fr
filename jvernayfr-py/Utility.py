@@ -6,7 +6,7 @@ import requests, tarfile, os, shutil, logging, subprocess
 from pathlib import Path
 
 def Download(url: str, filepath: str):
-    logging.info("Downloading {url} into {filepath}")
+    logging.info(f"Downloading {url} into {filepath}")
     r = requests.get(url)
     if r.status_code != 200:
         raise RuntimeError(f"Download(): could not download {url}")
